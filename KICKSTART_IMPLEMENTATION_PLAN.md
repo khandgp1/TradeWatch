@@ -414,10 +414,10 @@ The `engine_state` table stores:
 - [x] Implement post-processing filters (dedup, cooldown, same-hour)
 
 ### Phase 4 — REST API + Socket.IO
-- [ ] Build REST routes: `/api/candles`, `/api/signals`
-- [ ] Set up Socket.IO server with event emitters
-- [ ] Wire candle fetcher → engine → socket events
-- [ ] Set up `node-cron` scheduler for hourly fetches
+- [x] Build REST routes: `/api/candles`, `/api/signals`
+- [x] Set up Socket.IO server with event emitters
+- [x] Wire candle fetcher → engine → socket events
+- [x] Set up `node-cron` scheduler for hourly fetches
 - [ ] Verify: start server, confirm API returns data, confirm Socket.IO events fire
 
 ### Phase 5 — Frontend: Chart + Data Loading

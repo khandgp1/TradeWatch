@@ -1,6 +1,7 @@
 import { db } from '../db/connection';
 import { candles, signals, engineState } from '../db/schema';
 import { eq, lt, gt, lte, gte, and, desc } from 'drizzle-orm';
+import { appEvents } from './events';
 
 export async function processNewCandle(candleOpenTime: string): Promise<void> {
   // 1. Load or initialize engine_state singleton (id=1)
@@ -52,6 +53,7 @@ export async function processNewCandle(candleOpenTime: string): Promise<void> {
         await db.update(signals)
           .set({ status: 'Broken', updated_at: new Date().toISOString() })
           .where(eq(signals.id, sig.id));
+        appEvents.emit('signal-updated', { id: sig.id, status: 'Broken', end_time: finalEndTime });
       }
     } else {
       // Trend extends! Update end_time
@@ -178,7 +180,7 @@ export async function processNewCandle(candleOpenTime: string): Promise<void> {
     if (lastSigRes.length === 0) {
       // First trend ever -> accept
       const nowStr = new Date().toISOString();
-      await db.insert(signals).values({
+      const insertedRes = await db.insert(signals).values({
         start_time: cand.start_time,
         end_time: cand.start_time,
         rule: cand.rule,
@@ -187,8 +189,11 @@ export async function processNewCandle(candleOpenTime: string): Promise<void> {
         status: 'Ongoing',
         created_at: nowStr,
         updated_at: nowStr,
-      });
+      }).returning();
       newAcceptedEnd = cand.start_time;
+      if (insertedRes.length > 0) {
+        appEvents.emit('new-signal', { signal: insertedRes[0] as any });
+      }
       continue;
     }
 
@@ -210,7 +215,7 @@ export async function processNewCandle(candleOpenTime: string): Promise<void> {
     const hasRed = redCandleRes.some(c => c.close < c.open);
     if (hasRed) {
       const nowStr = new Date().toISOString();
-      await db.insert(signals).values({
+      const insertedRes = await db.insert(signals).values({
         start_time: cand.start_time,
         end_time: cand.start_time,
         rule: cand.rule,
@@ -219,8 +224,11 @@ export async function processNewCandle(candleOpenTime: string): Promise<void> {
         status: 'Ongoing',
         created_at: nowStr,
         updated_at: nowStr,
-      });
+      }).returning();
       newAcceptedEnd = cand.start_time;
+      if (insertedRes.length > 0) {
+        appEvents.emit('new-signal', { signal: insertedRes[0] as any });
+      }
     }
   }
 

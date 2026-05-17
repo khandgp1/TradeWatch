@@ -3,6 +3,7 @@ import { candles, signals, engineState } from '../db/schema';
 import { config } from '../config';
 import { desc, asc, eq } from 'drizzle-orm';
 import { processNewCandle } from './signalEngine';
+import { appEvents } from './events';
 
 export interface BinanceCandle {
   open_time: string;
@@ -130,6 +131,52 @@ export async function backfill(): Promise<{ fetched: number; inserted: number; p
     rule3Count,
     range: rangeStr,
   };
+}
+
+export async function fetchLatestCandles(): Promise<void> {
+  console.log('Fetching latest candles from Binance...');
+  const limit = 2;
+  const url = `https://api.binance.us/api/v3/klines?symbol=${config.symbol}&interval=${config.interval}&limit=${limit}`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) {
+      const text = await res.text();
+      console.error(`Binance API error (${res.status}): ${text}`);
+      return;
+    }
+
+    const data = (await res.json()) as any[][];
+    if (data.length === 0) {
+      return;
+    }
+
+    const createdAt = new Date().toISOString();
+    for (const row of data) {
+      const openTimeMs = row[0] as number;
+      const c = {
+        open_time: msToUtcString(openTimeMs),
+        open: parseFloat(row[1]),
+        high: parseFloat(row[2]),
+        low: parseFloat(row[3]),
+        close: parseFloat(row[4]),
+        volume: parseFloat(row[5]),
+      };
+
+      const insertRes = await db.insert(candles).values({
+        ...c,
+        created_at: createdAt,
+      }).onConflictDoNothing().returning();
+
+      if (insertRes.length > 0) {
+        const insertedCandle = insertRes[0];
+        console.log(`New candle inserted: ${insertedCandle.open_time}`);
+        appEvents.emit('new-candle', { candle: insertedCandle as any });
+        await processNewCandle(insertedCandle.open_time);
+      }
+    }
+  } catch (err) {
+    console.error('Error fetching latest candles:', err);
+  }
 }
 
 function msToUtcString(ms: number): string {
