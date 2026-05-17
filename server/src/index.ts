@@ -2,6 +2,7 @@ import express from 'express';
 import { createServer } from 'node:http';
 import { Server } from 'socket.io';
 import { Candle } from '@tradewatch/shared';
+import { config } from './config';
 
 const app = express();
 const httpServer = createServer(app);
@@ -24,8 +25,6 @@ io.on('connection', (socket) => {
   });
 });
 
-const PORT = 3001;
-
-httpServer.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+httpServer.listen(config.port, () => {
+  console.log(`Server running on port ${config.port}`);
 });

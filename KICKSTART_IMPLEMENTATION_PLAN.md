@@ -393,11 +393,11 @@ The `engine_state` table stores:
 ## Phased Implementation Roadmap
 
 ### Phase 1 — Project Scaffolding
-- [ ] Initialize npm workspace with `server/` and `client/` packages
-- [ ] Configure TypeScript (base + per-package)
-- [ ] Set up Vite + React for `client/`
-- [ ] Set up Express + `ts-node` for `server/`
-- [ ] Create `shared/types.ts` with `Candle`, `Signal`, `EngineState` interfaces
+- [x] Initialize npm workspace with `server/` and `client/` packages
+- [x] Configure TypeScript (base + per-package)
+- [x] Set up Vite + React for `client/`
+- [x] Set up Express + `tsx` for `server/`
+- [x] Create `shared/types.ts` with `Candle`, `Signal`, `EngineState` interfaces
 
 ### Phase 2 — Database + Candle Fetcher
 - [ ] Define Drizzle schema (`candles`, `signals`, `engine_state`, `config`)
