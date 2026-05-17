@@ -421,10 +421,10 @@ The `engine_state` table stores:
 - [ ] Verify: start server, confirm API returns data, confirm Socket.IO events fire
 
 ### Phase 5 — Frontend: Chart + Data Loading
-- [ ] Build `CandlestickChart.tsx` with TradingView Lightweight Charts
-- [ ] Build `useCandles` and `useSignals` hooks (REST initial load)
-- [ ] Render full candlestick chart with historical data
-- [ ] Implement pan and zoom
+- [x] Build `CandlestickChart.tsx` with TradingView Lightweight Charts
+- [x] Build `useCandles` and `useSignals` hooks (REST initial load)
+- [x] Render full candlestick chart with historical data
+- [x] Implement pan and zoom
 - [ ] Verify: chart renders correctly with real candle data
 
 ### Phase 6 — Frontend: Signal Panel + Overlays
