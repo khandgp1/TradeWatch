@@ -1,7 +1,8 @@
 import { db } from '../db/connection';
-import { candles } from '../db/schema';
+import { candles, signals, engineState } from '../db/schema';
 import { config } from '../config';
-import { desc } from 'drizzle-orm';
+import { desc, asc, eq } from 'drizzle-orm';
+import { processNewCandle } from './signalEngine';
 
 export interface BinanceCandle {
   open_time: string;
@@ -53,7 +54,7 @@ export async function fetchCandlesFromBinance(startMs: number, endMs: number): P
   return results;
 }
 
-export async function backfill(): Promise<{ fetched: number; inserted: number; range: string }> {
+export async function backfill(): Promise<{ fetched: number; inserted: number; processed: number; signalsCount: number; rule1Count: number; rule2Count: number; rule3Count: number; range: string }> {
   // Determine start time in ms
   let startMs = new Date(config.startTime + 'Z').getTime();
 
@@ -67,40 +68,67 @@ export async function backfill(): Promise<{ fetched: number; inserted: number; r
   }
 
   const endMs = Date.now();
-  if (startMs > endMs) {
-    return { fetched: 0, inserted: 0, range: 'Already up to date' };
-  }
-
-  console.log(`Fetching Binance candles from ${msToUtcString(startMs)} to ${msToUtcString(endMs)}...`);
-  const binanceCandles = await fetchCandlesFromBinance(startMs, endMs);
-
-  if (binanceCandles.length === 0) {
-    return { fetched: 0, inserted: 0, range: 'No new candles found' };
-  }
-
+  let fetchedCount = 0;
   let insertedCount = 0;
-  const createdAt = new Date().toISOString();
+  let rangeStr = 'Already up to date';
 
-  const valuesToInsert = binanceCandles.map((c) => ({
-    open_time: c.open_time,
-    open: c.open,
-    high: c.high,
-    low: c.low,
-    close: c.close,
-    volume: c.volume,
-    created_at: createdAt,
-  }));
+  if (startMs <= endMs) {
+    console.log(`Fetching Binance candles from ${msToUtcString(startMs)} to ${msToUtcString(endMs)}...`);
+    const binanceCandles = await fetchCandlesFromBinance(startMs, endMs);
 
-  if (valuesToInsert.length > 0) {
-    const res = await db.insert(candles).values(valuesToInsert).onConflictDoNothing().returning({ id: candles.id });
-    insertedCount = res.length;
+    if (binanceCandles.length > 0) {
+      fetchedCount = binanceCandles.length;
+      rangeStr = `${binanceCandles[0].open_time} to ${binanceCandles[binanceCandles.length - 1].open_time}`;
+      const createdAt = new Date().toISOString();
+
+      const valuesToInsert = binanceCandles.map((c) => ({
+        open_time: c.open_time,
+        open: c.open,
+        high: c.high,
+        low: c.low,
+        close: c.close,
+        volume: c.volume,
+        created_at: createdAt,
+      }));
+
+      if (valuesToInsert.length > 0) {
+        const res = await db.insert(candles).values(valuesToInsert).onConflictDoNothing().returning({ id: candles.id });
+        insertedCount = res.length;
+      }
+    } else {
+      rangeStr = 'No new candles found';
+    }
   }
 
-  const range = `${binanceCandles[0].open_time} to ${binanceCandles[binanceCandles.length - 1].open_time}`;
+  console.log('Processing candles through signal detection engine...');
+  const allCandles = await db.select().from(candles).orderBy(asc(candles.open_time));
+
+  let stateRes = await db.select().from(engineState).where(eq(engineState.id, 1));
+  const lastProcessed = stateRes.length > 0 ? stateRes[0].last_processed_time : null;
+
+  let processedCount = 0;
+  for (const c of allCandles) {
+    if (!lastProcessed || c.open_time > lastProcessed) {
+      await processNewCandle(c.open_time);
+      processedCount++;
+    }
+  }
+
+  const allSignals = await db.select().from(signals);
+  const signalsCount = allSignals.length;
+  const rule1Count = allSignals.filter(s => s.rule === 'Three Green Candles').length;
+  const rule2Count = allSignals.filter(s => s.rule === 'Close Above Prev High').length;
+  const rule3Count = allSignals.filter(s => s.rule === 'Close Above Post-Signal Peak').length;
+
   return {
-    fetched: binanceCandles.length,
+    fetched: fetchedCount,
     inserted: insertedCount,
-    range,
+    processed: processedCount,
+    signalsCount,
+    rule1Count,
+    rule2Count,
+    rule3Count,
+    range: rangeStr,
   };
 }
 

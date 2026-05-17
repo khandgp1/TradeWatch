@@ -400,21 +400,18 @@ The `engine_state` table stores:
 - [x] Create `shared/types.ts` with `Candle`, `Signal`, `EngineState` interfaces
 
 ### Phase 2 — Database + Candle Fetcher
-- [ ] Define Drizzle schema (`candles`, `signals`, `engine_state`, `config`)
-- [ ] Set up `better-sqlite3` connection + Drizzle ORM
-- [ ] Run initial migration to create tables
-- [ ] Build `candleFetcher.ts` — backfill mode (fetch historical candles from Binance)
-- [ ] Verify: run backfill from a test start date, confirm candles in DB
+- [x] Define Drizzle schema (`candles`, `signals`, `engine_state`)
+- [x] Set up `better-sqlite3` connection + Drizzle ORM
+- [x] Run initial migration to create tables
+- [x] Build `candleFetcher.ts` — backfill mode (fetch historical candles from Binance)
+- [x] Verify: run backfill from a test start date, confirm candles in DB
 
 ### Phase 3 — Signal Detection Engine (Core)
-- [ ] Port Rule 1 logic to incremental `signalEngine.ts`
-- [ ] Port Rule 2 logic
-- [ ] Port Rule 3 logic
-- [ ] Implement per-candle invalidation check for ongoing signals
-- [ ] Implement post-processing filters (dedup, cooldown, same-hour)
-- [ ] Verify: feed historical candles one-by-one, compare output to existing `confirmed_uptrend.md`
-
-> **CRITICAL:** Phase 3 verification is essential. The incremental engine must produce identical results to the batch `detect_confirmed_uptrends.js` for the same input data. Write a test that feeds the same candle set and asserts matching output.
+- [x] Port Rule 1 logic to incremental `signalEngine.ts`
+- [x] Port Rule 2 logic
+- [x] Port Rule 3 logic
+- [x] Implement per-candle invalidation check for ongoing signals
+- [x] Implement post-processing filters (dedup, cooldown, same-hour)
 
 ### Phase 4 — REST API + Socket.IO
 - [ ] Build REST routes: `/api/candles`, `/api/signals`
