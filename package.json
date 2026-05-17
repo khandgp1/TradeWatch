@@ -1,0 +1,9 @@
+{
+  "name": "tradewatch-root",
+  "private": true,
+  "workspaces": [
+    "shared",
+    "server",
+    "client"
+  ]
+}

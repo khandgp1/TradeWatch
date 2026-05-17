@@ -1,0 +1,35 @@
+:root {
+  --bg-primary: #131722;
+  --bg-secondary: #1e222d;
+  --bg-card: #2a2e39;
+  --text-primary: #d1d4dc;
+  --text-secondary: #848e9c;
+  --border-color: #2a2e39;
+  
+  --color-rule1: hsl(210, 70%, 60%); /* Three Green Candles - Blue */
+  --color-rule2: hsl(35, 80%, 55%);  /* Close Above Prev High - Amber */
+  --color-rule3: hsl(280, 60%, 60%); /* Post-Signal Peak - Purple */
+  
+  --color-ongoing: #00c853;
+  --color-broken: #ff3d00;
+
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: dark;
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+* {
+  box-sizing: border-box;
+}

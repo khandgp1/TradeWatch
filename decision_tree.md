@@ -1,7 +1,7 @@
 # Confirmed Uptrend — Decision Tree
 
 > Renders in VS Code (Markdown Preview Mermaid Support extension), GitHub, and Obsidian.
-> See `strategy_new.md` for full rule definitions.
+> See `strategy.md` for full rule definitions.
 
 ```mermaid
 flowchart TD
