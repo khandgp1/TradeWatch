@@ -1,11 +1,35 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useCandles } from './hooks/useCandles';
 import { useSignals } from './hooks/useSignals';
 import { CandlestickChart } from './components/CandlestickChart';
+import { SignalPanel } from './components/SignalPanel';
 
 const App: React.FC = () => {
   const { candles, loading: candlesLoading, error: candlesError } = useCandles();
   const { signals, loading: signalsLoading, error: signalsError } = useSignals();
+
+  // Active overlays state
+  const [visibleSignalIds, setVisibleSignalIds] = useState<Set<number>>(new Set());
+
+  const toggleSignal = (id: number) => {
+    setVisibleSignalIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const toggleAllSignals = (show: boolean) => {
+    if (show) {
+      setVisibleSignalIds(new Set(signals.map(s => s.id)));
+    } else {
+      setVisibleSignalIds(new Set());
+    }
+  };
 
   const loading = candlesLoading || signalsLoading;
   const error = candlesError || signalsError;
@@ -45,19 +69,34 @@ const App: React.FC = () => {
         </div>
       </header>
 
-      {/* Main Content Area */}
-      <main style={{ flex: 1, position: 'relative', width: '100%', overflow: 'hidden' }}>
-        {loading ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-secondary)' }}>
-            Loading Candlestick Chart...
-          </div>
-        ) : error ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--color-broken)' }}>
-            Error: {error}
-          </div>
-        ) : (
-          <CandlestickChart data={candles} />
-        )}
+      {/* Main Content Area (Flex row with Chart on left and Panel on right) */}
+      <main style={{ flex: 1, display: 'flex', width: '100%', overflow: 'hidden' }}>
+        {/* Left: Candlestick Chart */}
+        <div style={{ flex: 1, position: 'relative', height: '100%', overflow: 'hidden' }}>
+          {loading ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-secondary)' }}>
+              Loading Candlestick Chart...
+            </div>
+          ) : error ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--color-broken)' }}>
+              Error: {error}
+            </div>
+          ) : (
+            <CandlestickChart 
+              data={candles} 
+              signals={signals} 
+              visibleSignalIds={visibleSignalIds} 
+            />
+          )}
+        </div>
+
+        {/* Right: Signal Panel */}
+        <SignalPanel 
+          signals={signals}
+          visibleSignalIds={visibleSignalIds}
+          onToggleVisibility={toggleSignal}
+          onToggleAll={toggleAllSignals}
+        />
       </main>
 
       {/* Footer */}
@@ -74,7 +113,7 @@ const App: React.FC = () => {
       }}>
         <div>Data Source: Binance Official API</div>
         <div>Total Candles: <span style={{ color: '#fff' }}>{candles.length}</span></div>
-        <div>Press and drag to pan • Scroll to zoom</div>
+        <div>Press and drag to pan • Scroll to zoom • Select signals on the right to toggle overlays</div>
       </footer>
     </div>
   );

@@ -418,22 +418,22 @@ The `engine_state` table stores:
 - [x] Set up Socket.IO server with event emitters
 - [x] Wire candle fetcher → engine → socket events
 - [x] Set up `node-cron` scheduler for hourly fetches
-- [ ] Verify: start server, confirm API returns data, confirm Socket.IO events fire
+- [x] Verify: start server, confirm API returns data, confirm Socket.IO events fire
 
 ### Phase 5 — Frontend: Chart + Data Loading
 - [x] Build `CandlestickChart.tsx` with TradingView Lightweight Charts
 - [x] Build `useCandles` and `useSignals` hooks (REST initial load)
 - [x] Render full candlestick chart with historical data
 - [x] Implement pan and zoom
-- [ ] Verify: chart renders correctly with real candle data
+- [x] Verify: chart renders correctly with real candle data
 
 ### Phase 6 — Frontend: Signal Panel + Overlays
-- [ ] Build `SignalPanel.tsx` with toggle checkboxes
-- [ ] Implement indicator price lines on chart (per-signal, toggleable)
-- [ ] Implement trend shading rectangles (start-to-end, per-signal)
-- [ ] Implement signal markers on chart
-- [ ] Color-code by rule type
-- [ ] Verify: toggle signals on/off, confirm overlays appear/disappear
+- [x] Build `SignalPanel.tsx` with toggle checkboxes
+- [x] Implement indicator price lines on chart (per-signal, toggleable)
+- [x] Implement trend shading rectangles (start-to-end, per-signal)
+- [x] Implement signal markers on chart
+- [x] Color-code by rule type
+- [x] Verify: toggle signals on/off, confirm overlays appear/disappear
 
 ### Phase 7 — Real-Time Integration + Polish
 - [ ] Build `useSocket` hook — connect to Socket.IO, handle events

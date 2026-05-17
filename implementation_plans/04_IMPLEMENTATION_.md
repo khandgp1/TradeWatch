@@ -68,11 +68,12 @@ client/src/
   - [x] Render `<CandlestickChart data={candles} />` in the main content area, filling the available space.
 
 ### 5. Verification
-- [ ] Run `npm run dev` in both `server` and `client`.
-- [ ] Open the browser to `http://localhost:5173`.
-- [ ] Verify the chart renders.
-- [ ] Verify mouse-wheel zoom and click-drag pan work.
-- [ ] Verify the candle colors match standard green/red and the layout is dark themed.
+- [x] Start the backend server in terminal tab 1: `npm run dev -w server`
+- [x] Start the frontend dev server in terminal tab 2: `npm run dev -w client`
+- [x] Open the browser to `http://localhost:5173`.
+- [x] Verify the chart renders.
+- [x] Verify mouse-wheel zoom and click-drag pan work.
+- [x] Verify the candle colors match standard green/red and the layout is dark themed.
 
 ---
 
