@@ -1,15 +1,85 @@
-import React, { useState } from 'react';
-import { useCandles } from './hooks/useCandles';
+import React, { useState, useEffect } from 'react';
+import { useCandles, ChartCandle } from './hooks/useCandles';
 import { useSignals } from './hooks/useSignals';
+import { useSocket } from './hooks/useSocket';
 import { CandlestickChart } from './components/CandlestickChart';
 import { SignalPanel } from './components/SignalPanel';
+import { Candle, Signal } from '@tradewatch/shared';
 
 const App: React.FC = () => {
-  const { candles, loading: candlesLoading, error: candlesError } = useCandles();
-  const { signals, loading: signalsLoading, error: signalsError } = useSignals();
+  const { candles, setCandles, loading: candlesLoading, error: candlesError } = useCandles();
+  const { signals, setSignals, loading: signalsLoading, error: signalsError } = useSignals();
+  const { socket, isConnected } = useSocket();
 
   // Active overlays state
   const [visibleSignalIds, setVisibleSignalIds] = useState<Set<number>>(new Set());
+  const [countdown, setCountdown] = useState<string>('');
+
+  // Timer for next hourly update
+  useEffect(() => {
+    const updateCountdown = () => {
+      const now = new Date();
+      const nextHour = new Date();
+      nextHour.setHours(now.getHours() + 1, 0, 0, 0);
+      const diffMs = nextHour.getTime() - now.getTime();
+
+      const minutes = Math.floor(diffMs / (1000 * 60));
+      const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
+      setCountdown(`${minutes}m ${seconds}s`);
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Socket event listeners
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNewCandle = (candle: Candle) => {
+      const timestampMs = new Date(candle.open_time.replace(' ', 'T') + ':00Z').getTime();
+      const newChartCandle: ChartCandle = {
+        time: Math.floor(timestampMs / 1000),
+        open: candle.open,
+        high: candle.high,
+        low: candle.low,
+        close: candle.close,
+        originalTime: candle.open_time,
+      };
+
+      setCandles((prev) => {
+        const filtered = prev.filter((c) => c.time !== newChartCandle.time);
+        return [...filtered, newChartCandle];
+      });
+    };
+
+    const handleNewSignal = (signal: Signal) => {
+      setSignals((prev) => {
+        if (prev.some((s) => s.id === signal.id)) return prev;
+        return [...prev, signal];
+      });
+
+      // Auto-enable overlay for new signal
+      setVisibleSignalIds((prev) => new Set(prev).add(signal.id));
+    };
+
+    const handleSignalUpdated = (updatedSignal: Signal) => {
+      setSignals((prev) =>
+        prev.map((s) => (s.id === updatedSignal.id ? updatedSignal : s))
+      );
+    };
+
+    socket.on('new-candle', handleNewCandle);
+    socket.on('new-signal', handleNewSignal);
+    socket.on('signal-updated', handleSignalUpdated);
+
+    return () => {
+      socket.off('new-candle', handleNewCandle);
+      socket.off('new-signal', handleNewSignal);
+      socket.off('signal-updated', handleSignalUpdated);
+    };
+  }, [socket, setCandles, setSignals]);
 
   const toggleSignal = (id: number) => {
     setVisibleSignalIds((prev) => {
@@ -57,10 +127,10 @@ const App: React.FC = () => {
               width: '8px', 
               height: '8px', 
               borderRadius: '50%', 
-              backgroundColor: error ? 'var(--color-broken)' : loading ? '#ffb300' : 'var(--color-ongoing)' 
+              backgroundColor: error ? 'var(--color-broken)' : !isConnected ? '#ffb300' : 'var(--color-ongoing)' 
             }} />
             <span style={{ color: 'var(--text-secondary)' }}>
-              {error ? 'Error' : loading ? 'Loading Data...' : 'System Online'}
+              {error ? 'Error' : !isConnected ? 'Connecting Live Stream...' : 'Live Stream Active'}
             </span>
           </div>
           <div style={{ color: 'var(--text-secondary)' }}>
@@ -111,9 +181,20 @@ const App: React.FC = () => {
         color: 'var(--text-secondary)',
         flexShrink: 0
       }}>
-        <div>Data Source: Binance Official API</div>
-        <div>Total Candles: <span style={{ color: '#fff' }}>{candles.length}</span></div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+          <span>Data Source: Binance Official API</span>
+          <span>Total Candles: <span style={{ color: '#fff' }}>{candles.length}</span></span>
+        </div>
         <div>Press and drag to pan • Scroll to zoom • Select signals on the right to toggle overlays</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <span style={{ 
+            width: '6px', 
+            height: '6px', 
+            borderRadius: '50%', 
+            backgroundColor: isConnected ? 'var(--color-ongoing)' : '#ffb300' 
+          }} />
+          <span>Next Hourly Fetch in: <span style={{ color: '#fff', fontWeight: 500 }}>{countdown}</span></span>
+        </div>
       </footer>
     </div>
   );

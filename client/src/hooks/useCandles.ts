@@ -26,8 +26,8 @@ export function useCandles() {
         const data: Candle[] = await res.json();
 
         const formatted: ChartCandle[] = data.map((c) => {
-          // Parse YYYY-MM-DD HH:MM as UTC
-          const timestampMs = new Date(c.open_time + ':00Z').getTime();
+          // Parse YYYY-MM-DD HH:MM as UTC with T separator for Safari
+          const timestampMs = new Date(c.open_time.replace(' ', 'T') + ':00Z').getTime();
           return {
             time: Math.floor(timestampMs / 1000),
             open: c.open,
@@ -50,5 +50,5 @@ export function useCandles() {
     fetchCandles();
   }, []);
 
-  return { candles, loading, error };
+  return { candles, setCandles, loading, error };
 }

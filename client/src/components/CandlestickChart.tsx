@@ -56,6 +56,7 @@ export const CandlestickChart: React.FC<CandlestickChartProps> = ({ data, signal
     });
 
     seriesRef.current = series;
+    previousDataLengthRef.current = 0;
 
     // Attach custom shading primitive
     const shadingPrimitive = new TrendShadingPrimitive();
@@ -80,11 +81,19 @@ export const CandlestickChart: React.FC<CandlestickChartProps> = ({ data, signal
     };
   }, []); // Empty dependency array ensures chart is mounted exactly once
 
+  const previousDataLengthRef = useRef<number>(0);
+
   // 1b. Update Data separately
   useEffect(() => {
     if (seriesRef.current && data.length > 0) {
-      seriesRef.current.setData(data as any);
-      chartRef.current?.timeScale().fitContent();
+      if (previousDataLengthRef.current === 0) {
+        seriesRef.current.setData(data as any);
+        chartRef.current?.timeScale().fitContent();
+      } else {
+        const lastCandle = data[data.length - 1];
+        seriesRef.current.update(lastCandle as any);
+      }
+      previousDataLengthRef.current = data.length;
     }
   }, [data]);
 

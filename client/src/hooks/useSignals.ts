@@ -27,5 +27,5 @@ export function useSignals() {
     fetchSignals();
   }, []);
 
-  return { signals, loading, error };
+  return { signals, setSignals, loading, error };
 }

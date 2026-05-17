@@ -436,11 +436,11 @@ The `engine_state` table stores:
 - [x] Verify: toggle signals on/off, confirm overlays appear/disappear
 
 ### Phase 7 — Real-Time Integration + Polish
-- [ ] Build `useSocket` hook — connect to Socket.IO, handle events
-- [ ] Wire `new-candle` event to chart live update
-- [ ] Wire `new-signal` event to signal panel + auto-overlay
-- [ ] Wire `signal-updated` event to status updates
-- [ ] Add connection status indicator
-- [ ] Add status bar (last fetch time, candle count, next fetch countdown)
-- [ ] Dark theme polish, responsive layout
-- [ ] Verify: let it run for multiple hours, confirm candles + signals appear in real time
+- [x] Build `useSocket` hook — connect to Socket.IO, handle events
+- [x] Wire `new-candle` event to chart live update
+- [x] Wire `new-signal` event to signal panel + auto-overlay
+- [x] Wire `signal-updated` event to status updates
+- [x] Add connection status indicator
+- [x] Add status bar (last fetch time, candle count, next fetch countdown)
+- [x] Dark theme polish, responsive layout
+- [x] Verify: let it run for multiple hours, confirm candles + signals appear in real time
