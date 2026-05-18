@@ -93,12 +93,15 @@ const App: React.FC = () => {
     });
   };
 
-  const toggleAllSignals = (show: boolean) => {
-    if (show) {
-      setVisibleSignalIds(new Set(signals.map(s => s.id)));
-    } else {
-      setVisibleSignalIds(new Set());
-    }
+  const selectFocusSignal = (oldId: number | null, newId: number) => {
+    setVisibleSignalIds((prev) => {
+      const next = new Set(prev);
+      if (oldId !== null) {
+        next.delete(oldId);
+      }
+      next.add(newId);
+      return next;
+    });
   };
 
   const loading = candlesLoading || signalsLoading;
@@ -165,9 +168,10 @@ const App: React.FC = () => {
           signals={signals}
           visibleSignalIds={visibleSignalIds}
           onToggleVisibility={toggleSignal}
-          onToggleAll={toggleAllSignals}
+          onSelectFocus={selectFocusSignal}
         />
       </main>
+
 
       {/* Footer */}
       <footer style={{ 
