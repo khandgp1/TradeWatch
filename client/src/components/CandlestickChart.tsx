@@ -104,10 +104,10 @@ export const CandlestickChart: React.FC<CandlestickChartProps> = ({ data, signal
 
     const getRuleColor = (rule: string) => {
       switch (rule) {
-        case 'Three Green Candles': return '#64b5f6'; // Light blue
-        case 'Close Above Prev High': return '#ffb74d'; // Amber
-        case 'Close Above Post-Signal Peak': return '#ba68c8'; // Purple
-        default: return '#ffffff';
+        case 'Three Green Candles': return 'rgba(100, 181, 246, 0.25)'; // Light blue
+        case 'Close Above Prev High': return 'rgba(255, 183, 77, 0.25)'; // Amber
+        case 'Close Above Post-Signal Peak': return 'rgba(186, 104, 200, 0.25)'; // Purple
+        default: return 'rgba(255, 255, 255, 0.25)';
       }
     };
 
@@ -141,7 +141,6 @@ export const CandlestickChart: React.FC<CandlestickChartProps> = ({ data, signal
         position: 'belowBar',
         color: ruleColor,
         shape: 'arrowUp',
-        text: sig.rule,
       });
 
       // B. Price Line
