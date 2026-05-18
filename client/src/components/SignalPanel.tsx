@@ -5,24 +5,54 @@ interface SignalPanelProps {
   signals: Signal[];
   visibleSignalIds: Set<number>;
   onToggleVisibility: (id: number) => void;
-  onToggleAll: (show: boolean) => void;
+  onSelectFocus: (oldId: number | null, newId: number) => void;
 }
 
 export const SignalPanel: React.FC<SignalPanelProps> = ({
   signals,
   visibleSignalIds,
   onToggleVisibility,
-  onToggleAll,
+  onSelectFocus,
 }) => {
   const [filter, setFilter] = useState<'All' | 'Ongoing' | 'Broken'>('All');
+  const [focusedSignalId, setFocusedSignalId] = useState<number | null>(null);
 
-  const filteredSignals = signals.filter((sig) => {
-    if (filter === 'Ongoing') return sig.status === 'Ongoing';
-    if (filter === 'Broken') return sig.status === 'Broken';
-    return true;
-  });
+  const handleTabChange = (tab: 'All' | 'Ongoing' | 'Broken') => {
+    setFilter(tab);
+    setFocusedSignalId(null);
+  };
 
-  const allVisible = signals.length > 0 && signals.every((sig) => visibleSignalIds.has(sig.id));
+  const filteredSignals = signals
+    .filter((sig) => {
+      if (filter === 'Ongoing') return sig.status === 'Ongoing';
+      if (filter === 'Broken') return sig.status === 'Broken';
+      return true;
+    })
+    .sort((a, b) => b.start_time.localeCompare(a.start_time));
+
+  const handleNext = () => {
+    if (filteredSignals.length === 0) return;
+
+    if (focusedSignalId === null) {
+      const oldestSig = filteredSignals[filteredSignals.length - 1];
+      onSelectFocus(null, oldestSig.id);
+      setFocusedSignalId(oldestSig.id);
+    } else {
+      const currentIndex = filteredSignals.findIndex((s) => s.id === focusedSignalId);
+      if (currentIndex === -1) {
+        const oldestSig = filteredSignals[filteredSignals.length - 1];
+        onSelectFocus(null, oldestSig.id);
+        setFocusedSignalId(oldestSig.id);
+      } else if (currentIndex > 0) {
+        const nextSig = filteredSignals[currentIndex - 1];
+        onSelectFocus(focusedSignalId, nextSig.id);
+        setFocusedSignalId(nextSig.id);
+      }
+    }
+  };
+
+  const isNextDisabled = filteredSignals.length === 0 || 
+    (focusedSignalId !== null && filteredSignals.findIndex(s => s.id === focusedSignalId) === 0);
 
   const getRuleColor = (rule: string) => {
     switch (rule) {
@@ -58,15 +88,24 @@ export const SignalPanel: React.FC<SignalPanelProps> = ({
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <h2 style={{ margin: 0, fontSize: '1.125rem', color: '#fff', fontWeight: 600 }}>Detected Signals</h2>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.875rem', color: 'var(--text-primary)' }}>
-            <input
-              type="checkbox"
-              checked={allVisible}
-              onChange={(e) => onToggleAll(e.target.checked)}
-              style={{ cursor: 'pointer' }}
-            />
-            Toggle All Overlays
-          </label>
+          <button
+            onClick={handleNext}
+            disabled={isNextDisabled}
+            style={{
+              padding: '0.375rem 0.75rem',
+              backgroundColor: isNextDisabled ? 'var(--bg-primary)' : 'var(--color-ongoing)',
+              color: isNextDisabled ? 'var(--text-secondary)' : '#fff',
+              border: 'none',
+              borderRadius: '4px',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              cursor: isNextDisabled ? 'not-allowed' : 'pointer',
+              transition: 'all 0.2s',
+              opacity: isNextDisabled ? 0.6 : 1,
+            }}
+          >
+            Next
+          </button>
         </div>
 
         {/* Filter Tabs */}
@@ -74,7 +113,7 @@ export const SignalPanel: React.FC<SignalPanelProps> = ({
           {(['All', 'Ongoing', 'Broken'] as const).map((tab) => (
             <button
               key={tab}
-              onClick={() => setFilter(tab)}
+              onClick={() => handleTabChange(tab)}
               style={{
                 flex: 1,
                 padding: '0.375rem 0',
@@ -110,17 +149,28 @@ export const SignalPanel: React.FC<SignalPanelProps> = ({
         ) : (
           filteredSignals.map((sig) => {
             const isVisible = visibleSignalIds.has(sig.id);
+            const isFocused = sig.id === focusedSignalId;
             const ruleColor = getRuleColor(sig.rule);
 
             return (
               <div
                 key={sig.id}
-                onClick={() => onToggleVisibility(sig.id)}
+                onClick={() => {
+                  onToggleVisibility(sig.id);
+                  if (isVisible) {
+                    if (isFocused) {
+                      setFocusedSignalId(null);
+                    }
+                  } else {
+                    setFocusedSignalId(sig.id);
+                  }
+                }}
                 style={{
-                  backgroundColor: 'var(--bg-card)',
+                  backgroundColor: isFocused ? 'rgba(255, 255, 255, 0.08)' : 'var(--bg-card)',
                   borderRadius: '6px',
                   padding: '0.875rem',
                   border: `1px solid ${isVisible ? ruleColor : 'var(--border-color)'}`,
+                  boxShadow: isFocused ? '0 0 0 2px var(--color-ongoing)' : 'none',
                   cursor: 'pointer',
                   transition: 'all 0.2s',
                   display: 'flex',
