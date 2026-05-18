@@ -28,6 +28,14 @@ candles[i-3]  candles[i-2]  candles[i-1]  candles[i]
 
 ---
 
+## Global Prerequisites
+
+Before evaluating any specific rule for candle `n`, the following global conditions must be met:
+
+1. **Continuation Filter (One Signal Per Wave):** If any prior signal exists in the database (from Rule 1, 2, or 3), there must be at least one red candle (`close < open`) strictly after the `start_time` of the most recent prior signal and strictly before or at candle `n`'s open time. If no red candle has occurred, candle `n` is considered part of an ongoing momentum wave; no new signals will be evaluated.
+
+---
+
 ## Rule 1 — Three Consecutive Green Candles
 
 ### Signal
@@ -109,7 +117,7 @@ open[n-1] >= open[n-3]       ← Rule 2 gate FAILS
 ```
 
 ### Prerequisite
-There must be at least one confirmed trend (from Rule 1 or Rule 2) whose `start` timestamp is before `n`'s open time. If no prior range exists, skip this candle.
+There must be at least one confirmed trend (from Rule 1, Rule 2, or Rule 3) whose `start` timestamp is before `n`'s open time. (In addition, the Global Continuation Filter must be satisfied). If no prior range exists, skip this candle.
 
 ### Peak Candle Search
 1. Take the **most recent** prior confirmed trend (by `start` time).
