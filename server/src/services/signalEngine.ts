@@ -40,7 +40,7 @@ export async function processNewCandle(candleOpenTime: string): Promise<void> {
 
   // 3. Invalidate ongoing signals
   const ongoingSignals = await db.select().from(signals).where(eq(signals.status, 'Ongoing'));
-  
+
   for (const sig of ongoingSignals) {
     if (currentCandle.low <= sig.indicator) {
       // It broke!
@@ -77,94 +77,120 @@ export async function processNewCandle(candleOpenTime: string): Promise<void> {
     rule1StartIndex = null;
   }
 
-  let candidate1: any = null;
-  if (rule1Streak === 3 && rule1StartIndex) {
-    const startCandleRes = await db.select().from(candles).where(eq(candles.open_time, rule1StartIndex)).limit(1);
-    if (startCandleRes.length > 0) {
-      const startCandle = startCandleRes[0];
-      const indicator = startCandle.close;
-      if (currentCandle.low > indicator) {
-        candidate1 = {
-          rule: 'Three Green Candles',
-          indicator,
-          indicator_candle_time: startCandle.open_time,
-          start_time: currentCandle.open_time,
-        };
-      }
+  // 4. Global Continuation Filter check (One Signal Per Wave)
+  let blockNewSignals = false;
+  const globalPriorSignalRes = await db.select().from(signals)
+    .where(lt(signals.start_time, currentCandle.open_time))
+    .orderBy(desc(signals.start_time))
+    .limit(1);
+
+  if (globalPriorSignalRes.length > 0) {
+    const priorSig = globalPriorSignalRes[0];
+    const rangeCandles = await db.select().from(candles)
+      .where(
+        and(
+          gt(candles.open_time, priorSig.start_time),
+          lt(candles.open_time, currentCandle.open_time)
+        )
+      );
+    const hasRedCandle = rangeCandles.some(c => c.close < c.open);
+    if (!hasRedCandle) {
+      blockNewSignals = true;
     }
   }
 
-  // 5. Evaluate Rule 2 (Close Above Previous High)
+  // 5. Evaluate Candidates (Rules 1, 2, and 3)
+  let candidate1: any = null;
   let candidate2: any = null;
+  let candidate3: any = null;
   let rule2GateFailed = false;
 
-  if (loadedCandles.length >= 4) {
-    const n = loadedCandles[loadedCandles.length - 1]; // current
-    const n_1 = loadedCandles[loadedCandles.length - 2];
-    const n_3 = loadedCandles[loadedCandles.length - 4];
-
-    if (n.close > n.open && n.close > n_1.high) {
-      if (n_1.open < n_3.open) {
-        // Gate passes
-        const indicator = n_1.close > n_1.open ? n_1.close : n_1.open;
-        candidate2 = {
-          rule: 'Close Above Prev High',
-          indicator,
-          indicator_candle_time: n_1.open_time,
-          start_time: n.open_time,
-        };
-      } else {
-        // Gate fails -> flag for Rule 3
-        rule2GateFailed = true;
-      }
-    }
-  }
-
-  // 6. Evaluate Rule 3 (Close Above Post-Signal Peak)
-  let candidate3: any = null;
-  if (rule2GateFailed) {
-    const n = currentCandle;
-    const priorSignalRes = await db.select().from(signals)
-      .where(lt(signals.start_time, n.open_time))
-      .orderBy(desc(signals.start_time))
-      .limit(1);
-
-    if (priorSignalRes.length > 0) {
-      const priorSignal = priorSignalRes[0];
-      const indTime = priorSignal.indicator_candle_time;
-
-      const greenCandles = await db.select().from(candles)
-        .where(
-          and(
-            gt(candles.open_time, indTime),
-            lt(candles.open_time, n.open_time)
-          )
-        );
-
-      let peakCandle: any = null;
-      for (const c of greenCandles) {
-        if (c.close > c.open) {
-          if (!peakCandle || c.close > peakCandle.close) {
-            peakCandle = c;
-          }
-        }
-      }
-
-      if (peakCandle) {
-        const indicator = peakCandle.close;
-        if (n.close > indicator) {
-          candidate3 = {
-            rule: 'Close Above Post-Signal Peak',
+  if (!blockNewSignals) {
+    // Evaluate Rule 1 (Three Consecutive Green Candles)
+    if (rule1Streak === 3 && rule1StartIndex) {
+      const startCandleRes = await db.select().from(candles).where(eq(candles.open_time, rule1StartIndex)).limit(1);
+      if (startCandleRes.length > 0) {
+        const startCandle = startCandleRes[0];
+        const indicator = startCandle.close;
+        if (currentCandle.low > indicator) {
+          candidate1 = {
+            rule: 'Three Green Candles',
             indicator,
-            indicator_candle_time: peakCandle.open_time,
-            start_time: n.open_time,
+            indicator_candle_time: startCandle.open_time,
+            start_time: currentCandle.open_time,
           };
         }
       }
     }
+
+    // Evaluate Rule 2 (Close Above Previous High)
+    if (loadedCandles.length >= 4) {
+      const n = loadedCandles[loadedCandles.length - 1]; // current
+      const n_1 = loadedCandles[loadedCandles.length - 2];
+      const n_3 = loadedCandles[loadedCandles.length - 4];
+
+      if (n.close > n.open && n.close > n_1.high) {
+        if (n_1.open < n_3.open) {
+          // Gate passes
+          const indicator = n_1.close > n_1.open ? n_1.close : n_1.open;
+          candidate2 = {
+            rule: 'Close Above Prev High',
+            indicator,
+            indicator_candle_time: n_1.open_time,
+            start_time: n.open_time,
+          };
+        } else {
+          // Gate fails -> flag for Rule 3
+          rule2GateFailed = true;
+        }
+      }
+    }
+
+    // Evaluate Rule 3 (Close Above Post-Signal Peak)
+    if (rule2GateFailed) {
+      const n = currentCandle;
+      const priorSignalRes = await db.select().from(signals)
+        .where(lt(signals.start_time, n.open_time))
+        .orderBy(desc(signals.start_time))
+        .limit(1);
+
+      if (priorSignalRes.length > 0) {
+        const priorSignal = priorSignalRes[0];
+        const indTime = priorSignal.indicator_candle_time;
+
+        const greenCandles = await db.select().from(candles)
+          .where(
+            and(
+              gt(candles.open_time, indTime),
+              lt(candles.open_time, n.open_time)
+            )
+          );
+
+        let peakCandle: any = null;
+        for (const c of greenCandles) {
+          if (c.close > c.open) {
+            if (!peakCandle || c.close > peakCandle.close) {
+              peakCandle = c;
+            }
+          }
+        }
+
+        if (peakCandle) {
+          const indicator = peakCandle.close;
+          if (n.close > indicator) {
+            candidate3 = {
+              rule: 'Close Above Post-Signal Peak',
+              indicator,
+              indicator_candle_time: peakCandle.open_time,
+              start_time: n.open_time,
+            };
+          }
+        }
+      }
+    }
   }
 
-  // 7. Post-Processing Filters (Dedup)
+  // 6. Post-Processing Filters (Dedup)
   const candidates = [candidate1, candidate2, candidate3].filter(Boolean);
 
   for (const cand of candidates) {

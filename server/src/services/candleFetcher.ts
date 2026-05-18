@@ -56,7 +56,7 @@ export async function fetchCandlesFromBinance(startMs: number, endMs: number): P
   return results;
 }
 
-export async function backfill(): Promise<{ fetched: number; inserted: number; processed: number; signalsCount: number; rule1Count: number; rule2Count: number; rule3Count: number; range: string }> {
+export async function backfill(reset?: boolean): Promise<{ fetched: number; inserted: number; processed: number; signalsCount: number; rule1Count: number; rule2Count: number; rule3Count: number; range: string }> {
   // Determine start time in ms
   let startMs = new Date(config.startTime + 'Z').getTime();
 
@@ -103,6 +103,18 @@ export async function backfill(): Promise<{ fetched: number; inserted: number; p
   }
 
   console.log('Processing candles through signal detection engine...');
+  if (reset) {
+    console.log('Resetting signals and engine state for full re-evaluation...');
+    await db.delete(signals);
+    await db.update(engineState).set({
+      last_processed_time: null,
+      rule1_green_streak: 0,
+      rule1_streak_start_index: null,
+      last_accepted_end: null,
+      state_json: null,
+    }).where(eq(engineState.id, 1));
+  }
+
   const allCandles = await db.select().from(candles).orderBy(asc(candles.open_time));
 
   let stateRes = await db.select().from(engineState).where(eq(engineState.id, 1));
