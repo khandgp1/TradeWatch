@@ -52,22 +52,12 @@ flowchart TD
 
     subgraph SG4["Post-Processing Pipeline"]
         PP1["Step 1: Sort all signals by start time\nIf two signals share the same indicator price, keep only the earliest one"]
-        PP2{"Is this the very first\ntrend being accepted?"}
-        PP3{"Does this new trend start\nbefore the previous trend ended?"}
-        PP4{"Has at least one red candle closed\nsince the previous trend ended?"}
-        PP5{"Did the trend begin and end\nwithin the same hour?"}
-        PPB(["BLOCKED — too soon after the last trend"])
+        PP2{"Did the trend begin and end\nwithin the same hour?"}
         PPX(["EXCLUDED — lasted less than one hour"])
         PPO(["ACCEPTED\nWrite to output table"])
 
         PP1 --> PP2
-        PP2 -->|Yes| PP5
-        PP2 -->|No| PP3
-        PP3 -->|Yes| PPB
-        PP3 -->|No| PP4
-        PP4 -->|Yes| PP5
-        PP4 -->|No| PPB
-        PP5 -->|Yes| PPX
-        PP5 -->|No| PPO
+        PP2 -->|Yes| PPX
+        PP2 -->|No| PPO
     end
 ```

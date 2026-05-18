@@ -143,15 +143,7 @@ After all three rules are evaluated, the following filters are applied **in orde
 ### Step 1 — Deduplicate by Indicator Value
 Sort all detected ranges by `start` time (ascending). Keep only the **first** range per unique `indicator` price. If two rules fire with the same indicator level, only the earliest one is retained.
 
-### Step 2 — Cooldown Filter
-A new trend is only accepted after a **red candle** has closed following the end of the previous accepted trend.
-
-Rules:
-- The first trend is always accepted.
-- If a new trend's `start <= previous trend's end`, block it (still inside the previous trend window).
-- If the new trend's `start > previous trend's end`, find the first red candle (`close < open`) whose open time is `>= previous trend's end`. The new trend is accepted only if its `start >= that red candle's open time`.
-
-### Step 3 — Exclude Same-Hour Trends
+### Step 2 — Exclude Same-Hour Trends
 Discard any trend where `start === end` (the trend began and ended within the same candle).
 
 ---
