@@ -34,8 +34,9 @@ export async function fetchCandlesFromBinance(startMs: number, endMs: number): P
 
     for (const row of data) {
       const openTimeMs = row[0] as number;
-      // Skip if beyond endMs
-      if (openTimeMs > endMs) continue;
+      const closeTimeMs = row[6] as number;
+      // Skip if beyond endMs or if candle has not fully closed yet
+      if (openTimeMs > endMs || Date.now() <= closeTimeMs) continue;
 
       results.push({
         open_time: msToUtcString(openTimeMs),
@@ -153,6 +154,11 @@ export async function fetchLatestCandles(): Promise<void> {
     const createdAt = new Date().toISOString();
     for (const row of data) {
       const openTimeMs = row[0] as number;
+      const closeTimeMs = row[6] as number;
+      if (Date.now() <= closeTimeMs) {
+        continue;
+      }
+
       const c = {
         open_time: msToUtcString(openTimeMs),
         open: parseFloat(row[1]),

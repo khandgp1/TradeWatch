@@ -106,10 +106,10 @@ setInterval(async () => {
     const stateRes = await db.select().from(engineState).where(eq(engineState.id, 1));
     const lastProcessed = stateRes.length > 0 ? stateRes[0].last_processed_time : null;
 
-    // Calculate next fetch time (minute 1 of next hour)
+    // Calculate next fetch time (5 seconds past next hour)
     const now = new Date();
     const nextFetchDate = new Date(now);
-    nextFetchDate.setHours(now.getHours() + 1, 1, 0, 0);
+    nextFetchDate.setHours(now.getHours() + 1, 0, 5, 0);
 
     io.emit('engine-status', {
       lastProcessed,
@@ -120,8 +120,8 @@ setInterval(async () => {
   }
 }, 30000);
 
-// Initialize node-cron for live fetching at minute 1 of every hour
-cron.schedule('1 * * * *', () => {
+// Initialize node-cron for live fetching at 5 seconds past every hour
+cron.schedule('5 0 * * * *', () => {
   console.log('Cron triggered: fetching latest candles...');
   fetchLatestCandles();
 });
