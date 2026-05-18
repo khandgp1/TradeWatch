@@ -6,7 +6,11 @@
 ```mermaid
 flowchart TD
     START(["For Each Candle in Dataset"])
-    START --> R1Q
+    START --> GCF
+
+    GCF{"Global Continuation Filter:\nIf a prior signal exists, has there\nbeen a red candle since its start?"}
+    GCF -->|Yes or No Prior Signal| R1Q
+    GCF -->|No - Ongoing Momentum| DONE
 
     subgraph SG1["Rule 1 — Three Consecutive Green Candles"]
         R1Q{"Are the last 3 candles all green?\n(close > open for each)"}
