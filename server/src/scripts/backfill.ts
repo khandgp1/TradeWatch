@@ -3,7 +3,7 @@ import { backfill } from '../services/candleFetcher';
 async function main() {
   try {
     console.log('Starting historical candle backfill and signal detection...');
-    const result = await backfill(true);
+    const result = await backfill(false);
     console.log('\n--- Backfill & Engine Summary ---');
     console.log(`Time Range: ${result.range}`);
     console.log(`Total Fetched: ${result.fetched}`);
