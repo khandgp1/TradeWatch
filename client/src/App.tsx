@@ -14,6 +14,7 @@ const App: React.FC = () => {
   // Active overlays state
   const [visibleSignalIds, setVisibleSignalIds] = useState<Set<number>>(new Set());
   const [countdown, setCountdown] = useState<string>('');
+  const [timezone, setTimezone] = useState<'UTC' | 'EDT'>('UTC');
 
   // Timer for next hourly update
   useEffect(() => {
@@ -161,6 +162,7 @@ const App: React.FC = () => {
               data={candles} 
               signals={signals} 
               visibleSignalIds={visibleSignalIds} 
+              timezone={timezone}
             />
           )}
         </div>
@@ -192,14 +194,39 @@ const App: React.FC = () => {
           <span>Total Candles: <span style={{ color: '#fff' }}>{candles.length}</span></span>
         </div>
         <div>Press and drag to pan • Scroll to zoom • Select signals on the right to toggle overlays</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span style={{ 
-            width: '6px', 
-            height: '6px', 
-            borderRadius: '50%', 
-            backgroundColor: isConnected ? 'var(--color-ongoing)' : '#ffb300' 
-          }} />
-          <span>Next Hourly Fetch in: <span style={{ color: '#fff', fontWeight: 500 }}>{countdown}</span></span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span style={{ 
+              width: '6px', 
+              height: '6px', 
+              borderRadius: '50%', 
+              backgroundColor: isConnected ? 'var(--color-ongoing)' : '#ffb300' 
+            }} />
+            <span>Next Hourly Fetch in: <span style={{ color: '#fff', fontWeight: 500 }}>{countdown}</span></span>
+          </div>
+
+          <div 
+            onClick={() => setTimezone(prev => prev === 'UTC' ? 'EDT' : 'UTC')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              padding: '0.25rem 0.5rem',
+              borderRadius: '4px',
+              backgroundColor: 'rgba(255, 255, 255, 0.05)',
+              cursor: 'pointer',
+              color: timezone === 'EDT' ? 'var(--color-ongoing)' : 'var(--text-primary)',
+              fontWeight: 500,
+              transition: 'all 0.15s ease',
+            }}
+            title="Click to toggle timezone"
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)'}
+          >
+            <span>🌍</span>
+            <span>{timezone}</span>
+            <span style={{ fontSize: '0.65rem', opacity: 0.7 }}>⌃</span>
+          </div>
         </div>
       </footer>
     </div>

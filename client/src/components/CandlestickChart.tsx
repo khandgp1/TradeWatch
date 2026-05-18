@@ -8,9 +8,49 @@ interface CandlestickChartProps {
   data: ChartCandle[];
   signals: Signal[];
   visibleSignalIds: Set<number>;
+  timezone: 'UTC' | 'EDT';
 }
 
-export const CandlestickChart: React.FC<CandlestickChartProps> = ({ data, signals, visibleSignalIds }) => {
+const formatTime = (time: Time, timezone: 'UTC' | 'EDT', isTickMark: boolean) => {
+  if (typeof time !== 'number') return '';
+  const date = new Date(time * 1000);
+  const tz = timezone === 'EDT' ? 'America/New_York' : 'UTC';
+
+  if (isTickMark) {
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: tz,
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+    const timeStr = formatter.format(date);
+    
+    if (timeStr === '00:00' || timeStr === '24:00') {
+      const dateFormatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: tz,
+        month: 'short',
+        day: 'numeric',
+      });
+      return dateFormatter.format(date);
+    }
+    return timeStr;
+  } else {
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: tz,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+    const parts = formatter.formatToParts(date);
+    const getPart = (type: string) => parts.find(p => p.type === type)?.value || '';
+    return `${getPart('year')}-${getPart('month')}-${getPart('day')} ${getPart('hour')}:${getPart('minute')}`;
+  }
+};
+
+export const CandlestickChart: React.FC<CandlestickChartProps> = ({ data, signals, visibleSignalIds, timezone }) => {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
@@ -96,6 +136,19 @@ export const CandlestickChart: React.FC<CandlestickChartProps> = ({ data, signal
       previousDataLengthRef.current = data.length;
     }
   }, [data]);
+
+  // 1c. Update Timezone formatters dynamically
+  useEffect(() => {
+    if (!chartRef.current) return;
+    chartRef.current.applyOptions({
+      localization: {
+        timeFormatter: (time: Time) => formatTime(time, timezone, false),
+      },
+      timeScale: {
+        tickMarkFormatter: (time: Time) => formatTime(time, timezone, true),
+      },
+    });
+  }, [timezone]);
 
   // 2. Synchronize Overlays (Markers, Price Lines, Shading)
   useEffect(() => {
