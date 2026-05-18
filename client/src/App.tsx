@@ -4,7 +4,7 @@ import { useSignals } from './hooks/useSignals';
 import { useSocket } from './hooks/useSocket';
 import { CandlestickChart } from './components/CandlestickChart';
 import { SignalPanel } from './components/SignalPanel';
-import { Candle, Signal } from '@tradewatch/shared';
+import { Candle, Signal, NewCandleEvent, NewSignalEvent, SignalUpdatedEvent } from '@tradewatch/shared';
 
 const App: React.FC = () => {
   const { candles, setCandles, loading: candlesLoading, error: candlesError } = useCandles();
@@ -37,7 +37,8 @@ const App: React.FC = () => {
   useEffect(() => {
     if (!socket) return;
 
-    const handleNewCandle = (candle: Candle) => {
+    const handleNewCandle = (event: NewCandleEvent) => {
+      const { candle } = event;
       const timestampMs = new Date(candle.open_time.replace(' ', 'T') + ':00Z').getTime();
       const newChartCandle: ChartCandle = {
         time: Math.floor(timestampMs / 1000),
@@ -54,7 +55,8 @@ const App: React.FC = () => {
       });
     };
 
-    const handleNewSignal = (signal: Signal) => {
+    const handleNewSignal = (event: NewSignalEvent) => {
+      const { signal } = event;
       setSignals((prev) => {
         if (prev.some((s) => s.id === signal.id)) return prev;
         return [...prev, signal];
@@ -64,9 +66,9 @@ const App: React.FC = () => {
       setVisibleSignalIds((prev) => new Set(prev).add(signal.id));
     };
 
-    const handleSignalUpdated = (updatedSignal: Signal) => {
+    const handleSignalUpdated = (event: SignalUpdatedEvent) => {
       setSignals((prev) =>
-        prev.map((s) => (s.id === updatedSignal.id ? updatedSignal : s))
+        prev.map((s) => (s.id === event.id ? { ...s, status: event.status, end_time: event.end_time } : s))
       );
     };
 
