@@ -28,6 +28,5 @@ export const engineState = sqliteTable('engine_state', {
   last_processed_time: text('last_processed_time'),
   rule1_green_streak: integer('rule1_green_streak').notNull().default(0),
   rule1_streak_start_index: text('rule1_streak_start_index'),
-  last_accepted_end: text('last_accepted_end'),
   state_json: text('state_json'),
 });

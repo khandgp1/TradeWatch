@@ -164,8 +164,7 @@ export async function processNewCandle(candleOpenTime: string): Promise<void> {
     }
   }
 
-  // 7. Post-Processing Filters (Dedup & Cooldown)
-  let newAcceptedEnd = state.last_accepted_end;
+  // 7. Post-Processing Filters (Dedup)
   const candidates = [candidate1, candidate2, candidate3].filter(Boolean);
 
   for (const cand of candidates) {
@@ -175,60 +174,20 @@ export async function processNewCandle(candleOpenTime: string): Promise<void> {
       continue;
     }
 
-    // Cooldown filter
-    const lastSigRes = await db.select().from(signals).orderBy(desc(signals.start_time)).limit(1);
-    if (lastSigRes.length === 0) {
-      // First trend ever -> accept
-      const nowStr = new Date().toISOString();
-      const insertedRes = await db.insert(signals).values({
-        start_time: cand.start_time,
-        end_time: cand.start_time,
-        rule: cand.rule,
-        indicator: cand.indicator,
-        indicator_candle_time: cand.indicator_candle_time,
-        status: 'Ongoing',
-        created_at: nowStr,
-        updated_at: nowStr,
-      }).returning();
-      newAcceptedEnd = cand.start_time;
-      if (insertedRes.length > 0) {
-        appEvents.emit('new-signal', { signal: insertedRes[0] as any });
-      }
-      continue;
-    }
+    const nowStr = new Date().toISOString();
+    const insertedRes = await db.insert(signals).values({
+      start_time: cand.start_time,
+      end_time: cand.start_time,
+      rule: cand.rule,
+      indicator: cand.indicator,
+      indicator_candle_time: cand.indicator_candle_time,
+      status: 'Ongoing',
+      created_at: nowStr,
+      updated_at: nowStr,
+    }).returning();
 
-    const lastSig = lastSigRes[0];
-    const lastEnd = lastSig.end_time;
-
-    if (cand.start_time <= lastEnd) {
-      continue; // still inside previous trend window
-    }
-
-    const redCandleRes = await db.select().from(candles)
-      .where(
-        and(
-          gte(candles.open_time, lastEnd),
-          lte(candles.open_time, cand.start_time)
-        )
-      );
-
-    const hasRed = redCandleRes.some(c => c.close < c.open);
-    if (hasRed) {
-      const nowStr = new Date().toISOString();
-      const insertedRes = await db.insert(signals).values({
-        start_time: cand.start_time,
-        end_time: cand.start_time,
-        rule: cand.rule,
-        indicator: cand.indicator,
-        indicator_candle_time: cand.indicator_candle_time,
-        status: 'Ongoing',
-        created_at: nowStr,
-        updated_at: nowStr,
-      }).returning();
-      newAcceptedEnd = cand.start_time;
-      if (insertedRes.length > 0) {
-        appEvents.emit('new-signal', { signal: insertedRes[0] as any });
-      }
+    if (insertedRes.length > 0) {
+      appEvents.emit('new-signal', { signal: insertedRes[0] as any });
     }
   }
 
@@ -238,7 +197,6 @@ export async function processNewCandle(candleOpenTime: string): Promise<void> {
       last_processed_time: currentCandle.open_time,
       rule1_green_streak: rule1Streak,
       rule1_streak_start_index: rule1StartIndex,
-      last_accepted_end: newAcceptedEnd,
     })
     .where(eq(engineState.id, 1));
 }
