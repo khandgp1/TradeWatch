@@ -8,6 +8,8 @@ import { candles, signals, engineState } from './db/schema';
 import { appEvents } from './services/events';
 import { fetchLatestCandles } from './services/candleFetcher';
 import { asc, desc, eq, gte, lte, and } from 'drizzle-orm';
+import { broadcastSignal } from './services/telegram';
+
 
 const app = express();
 const httpServer = createServer(app);
@@ -94,6 +96,7 @@ appEvents.on('new-candle', (payload) => {
 
 appEvents.on('new-signal', (payload) => {
   io.emit('new-signal', payload);
+  broadcastSignal(payload.signal);
 });
 
 appEvents.on('signal-updated', (payload) => {
