@@ -1,6 +1,6 @@
 export const config = {
   // The date/time to start fetching candles from (UTC)
-  startTime: '2026-05-13 09:00',
+  startTime: '2026-05-18 00:00',
 
   // Binance trading pair — fixed to BTCUSDT
   symbol: 'BTCUSDT',
