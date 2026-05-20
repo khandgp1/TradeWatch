@@ -1,6 +1,6 @@
 export const config = {
   // The date/time to start fetching candles from (UTC)
-  startTime: '2026-05-18 00:00',
+  startTime: '2026-05-19 10:00',
 
   // Binance trading pair — fixed to BTCUSDT
   symbol: 'BTCUSDT',
@@ -13,4 +13,7 @@ export const config = {
 
   // Database file path (relative to server root)
   dbPath: './data/alerting.db',
+
+  // Toggle to enable/disable Telegram alerts
+  enableTelegramAlerts: true,
 } as const;
