@@ -115,8 +115,8 @@ Ensure that temporary SQLite files are not committed to source control.
 
 ## Progress Checklist
 
-- [ ] **Step 1:** Update `server/src/index.ts` with static serving logic and tighter CORS.
-- [ ] **Step 2:** Update `server/src/config.ts` to use environment variables.
-- [ ] **Step 3:** Add `build` and `start` scripts to root `package.json`.
-- [ ] **Step 4:** Create `ecosystem.config.cjs` in the root folder.
-- [ ] **Step 5:** Add SQLite temp files to `.gitignore`.
+- [x] **Step 1:** Update `server/src/index.ts` with static serving logic and tighter CORS.
+- [x] **Step 2:** Update `server/src/config.ts` to use environment variables.
+- [x] **Step 3:** Add `build` and `start` scripts to root `package.json`.
+- [x] **Step 4:** Create `ecosystem.config.cjs` in the root folder.
+- [x] **Step 5:** Add SQLite temp files to `.gitignore`.
