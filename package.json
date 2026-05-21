@@ -5,5 +5,9 @@
     "shared",
     "server",
     "client"
-  ]
+  ],
+  "scripts": {
+    "build": "npm run build -w client",
+    "start": "NODE_ENV=production node --import tsx server/src/index.ts"
+  }
 }
