@@ -296,12 +296,12 @@ pm2 restart tradewatch
 ## Progress Checklist
 
 ### Phase 1: Code Changes
-- [ ] **1.1** Express serves Vite static build (`server/src/index.ts`)
-- [ ] **1.2** Environment variable overrides in config (`server/src/config.ts`)
-- [ ] **1.3** Root build & start scripts (`package.json`)
-- [ ] **1.4** PM2 ecosystem config (`ecosystem.config.cjs`)
-- [ ] **1.5** Update `.gitignore`
-- [ ] **1.6** Tighten CORS for production (`server/src/index.ts`)
+- [x] **1.1** Express serves Vite static build (`server/src/index.ts`)
+- [x] **1.2** Environment variable overrides in config (`server/src/config.ts`)
+- [x] **1.3** Root build & start scripts (`package.json`)
+- [x] **1.4** PM2 ecosystem config (`ecosystem.config.cjs`)
+- [x] **1.5** Update `.gitignore`
+- [x] **1.6** Tighten CORS for production (`server/src/index.ts`)
 
 ### Phase 2: Server Setup (Manual)
 - [ ] **2.1** Create Oracle Cloud account & VPS instance
