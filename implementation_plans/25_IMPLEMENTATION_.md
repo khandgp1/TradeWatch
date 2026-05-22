@@ -304,15 +304,15 @@ pm2 restart tradewatch
 - [x] **1.6** Tighten CORS for production (`server/src/index.ts`)
 
 ### Phase 2: Server Setup (Manual)
-- [ ] **2.1** Create Oracle Cloud account & VPS instance
-- [ ] **2.2** SSH in, install Node.js, PM2, Nginx, Git
-- [ ] **2.3** Clone repo, install dependencies, build client
-- [ ] **2.4** Start app with PM2, configure auto-restart
-- [ ] **2.5** Configure Nginx reverse proxy
-- [ ] **2.6** (Optional) HTTPS with Let's Encrypt
+- [x] **2.1** Create Oracle Cloud account & VPS instance
+- [x] **2.2** SSH in, install Node.js, PM2, Nginx, Git
+- [x] **2.3** Clone repo, install dependencies, build client
+- [x] **2.4** Start app with PM2, configure auto-restart
+- [x] **2.5** Configure Nginx reverse proxy
+- [x] **2.6** (Optional) HTTPS with Let's Encrypt
 
 ### Phase 3: Verify
-- [ ] **3.1** App is accessible via `http://<server-ip>`
-- [ ] **3.2** WebSocket connections work (chart updates live)
-- [ ] **3.3** Cron jobs are running (candles fetched hourly)
-- [ ] **3.4** SQLite database persists across PM2 restarts
+- [x] **3.1** App is accessible via `http://<server-ip>`
+- [x] **3.2** WebSocket connections work (chart updates live)
+- [x] **3.3** Cron jobs are running (candles fetched hourly)
+- [x] **3.4** SQLite database persists across PM2 restarts
