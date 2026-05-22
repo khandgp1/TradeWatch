@@ -1,30 +1,21 @@
-# Implementation Plan 28: Server Configuration & Deployment Automation
+#!/bin/bash
 
-## Objective
-Automate the setup of the Oracle Cloud VPS instance via SSH. This includes installing required software, cloning the TradeWatch repository, building the application, and configuring PM2 and Nginx for production use.
-
-## Step-by-Step Instructions
-
-### Step 1: Secure Local SSH Key
-Ensure the private SSH key has the correct permissions so it is accepted by the VPS.
-```bash
-# turbo
+# Secure the SSH key
 chmod 400 /Users/khandpv1/Desktop/.AntiGrav/TradeWatch/ssh-key-2026-05-21.key
-```
 
-### Step 2: Server Setup Script Execution
-Connect to the server via SSH and run the following multi-line command to fully configure the VPS:
-
-```bash
-# turbo
+# Connect and run setup
 ssh -o StrictHostKeyChecking=accept-new -i /Users/khandpv1/Desktop/.AntiGrav/TradeWatch/ssh-key-2026-05-21.key ubuntu@141.148.58.205 << 'EOF'
   set -e
 
   echo "1. Updating system and installing dependencies..."
   sudo apt update && sudo DEBIAN_FRONTEND=noninteractive apt upgrade -y
   curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-  sudo apt install -y nodejs nginx git
+  sudo apt install -y nodejs nginx git iptables-persistent
   sudo npm install -g pm2
+
+  echo "1.5 Configuring OS Firewall (iptables)..."
+  sudo iptables -I INPUT 5 -m state --state NEW -p tcp --dport 80 -j ACCEPT || true
+  sudo netfilter-persistent save
 
   echo "2. Cloning the repository..."
   cd /home/ubuntu
@@ -41,7 +32,20 @@ ssh -o StrictHostKeyChecking=accept-new -i /Users/khandpv1/Desktop/.AntiGrav/Tra
   git checkout Public-Deployment-Phase-2
 
   echo "3. Installing NPM dependencies and building..."
+  # Clean corrupted node_modules from previous attempts
+  rm -rf /home/ubuntu/tradewatch/node_modules
+  rm -rf /home/ubuntu/tradewatch/server/node_modules
+  rm -rf /home/ubuntu/tradewatch/client/node_modules
+  rm -rf /home/ubuntu/tradewatch/shared/node_modules
   npm install
+
+  # Fix: drizzle-kit is in root/node_modules but drizzle-orm is in server/node_modules.
+  # drizzle-kit resolves drizzle-orm from its own location, so symlink it up to root.
+  ln -sf ../server/node_modules/drizzle-orm /home/ubuntu/tradewatch/node_modules/drizzle-orm
+
+  # Ensure the SQLite database directory exists
+  mkdir -p /home/ubuntu/tradewatch/server/data
+
   npm run db:push -w server
   npm run build
 
@@ -75,12 +79,3 @@ NGINX'
 
   echo "Setup Complete!"
 EOF
-```
-
----
-
-## Progress Checklist
-
-- [x] **Step 1:** Secure the local SSH key permissions (`chmod 400`).
-- [x] **Step 2:** Execute automated setup script over SSH.
-- [x] **Step 3:** Verify the app is accessible at `http://141.148.58.205`.
