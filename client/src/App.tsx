@@ -20,9 +20,14 @@ const App: React.FC = () => {
   useEffect(() => {
     const updateCountdown = () => {
       const now = new Date();
-      const nextHour = new Date();
-      nextHour.setHours(now.getHours() + 1, 0, 0, 0);
-      const diffMs = nextHour.getTime() - now.getTime();
+      const nextFetch = new Date(now);
+      nextFetch.setHours(now.getHours(), 0, 5, 0);
+
+      if (now.getTime() >= nextFetch.getTime()) {
+        nextFetch.setHours(now.getHours() + 1, 0, 5, 0);
+      }
+
+      const diffMs = nextFetch.getTime() - now.getTime();
 
       const minutes = Math.floor(diffMs / (1000 * 60));
       const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
