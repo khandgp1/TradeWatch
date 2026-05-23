@@ -1,6 +1,11 @@
 import express from 'express';
 import { createServer } from 'node:http';
 import { Server } from 'socket.io';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 import cron from 'node-cron';
 import { config } from './config';
 import { db } from './db/connection';
@@ -15,7 +20,7 @@ const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: '*',
+    origin: process.env.NODE_ENV === 'production' ? false : '*',
   },
 });
 
@@ -128,6 +133,17 @@ cron.schedule('5 0 * * * *', () => {
   console.log('Cron triggered: fetching latest candles...');
   fetchLatestCandles();
 });
+
+// Serve the Vite-built React frontend in production
+if (process.env.NODE_ENV === 'production') {
+  const clientDistPath = path.resolve(__dirname, '../../client/dist');
+  app.use(express.static(clientDistPath));
+
+  // Catch-all: serve index.html for any non-API route (SPA support)
+  app.get('*', (_req, res) => {
+    res.sendFile(path.join(clientDistPath, 'index.html'));
+  });
+}
 
 httpServer.listen(config.port, () => {
   console.log(`Server running on port ${config.port}`);

@@ -4,3 +4,11 @@ server/data/
 drizzle/
 .env
 .env.*
+*.db
+*.db-wal
+*.db-shm
+
+# Ignore SSH keys
+ssh-key-*.key
+ssh-key-*.key.pub
+.keys/
