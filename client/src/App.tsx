@@ -178,6 +178,7 @@ const App: React.FC = () => {
           visibleSignalIds={visibleSignalIds}
           onToggleVisibility={toggleSignal}
           onSelectFocus={selectFocusSignal}
+          timezone={timezone}
         />
       </main>
 

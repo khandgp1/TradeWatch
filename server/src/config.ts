@@ -21,5 +21,6 @@ export const config = {
   dbPath: process.env.TW_DB_PATH || path.resolve(__dirname, '../data/alerting.db'),
 
   // Toggle to enable/disable Telegram alerts
+  // Always False if not in Production. The last boolean value can be set to true to override for testing.
   enableTelegramAlerts: process.env.TW_TELEGRAM_ENABLED !== undefined ? process.env.TW_TELEGRAM_ENABLED === 'true' : false,
 } as const;

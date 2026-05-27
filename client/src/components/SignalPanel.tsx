@@ -6,13 +6,37 @@ interface SignalPanelProps {
   visibleSignalIds: Set<number>;
   onToggleVisibility: (id: number) => void;
   onSelectFocus: (oldId: number | null, newId: number) => void;
+  timezone: 'UTC' | 'EDT';
 }
+
+const formatSignalTime = (timeStr: string, timezone: 'UTC' | 'EDT'): string => {
+  if (!timeStr) return '';
+  const timestampMs = new Date(timeStr.replace(' ', 'T') + ':00Z').getTime();
+  if (isNaN(timestampMs)) return timeStr;
+  const date = new Date(timestampMs);
+  const tz = timezone === 'EDT' ? 'America/New_York' : 'UTC';
+
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: tz,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+
+  const parts = formatter.formatToParts(date);
+  const getPart = (type: string) => parts.find(p => p.type === type)?.value || '';
+  return `${getPart('year')}-${getPart('month')}-${getPart('day')} ${getPart('hour')}:${getPart('minute')}`;
+};
 
 export const SignalPanel: React.FC<SignalPanelProps> = ({
   signals,
   visibleSignalIds,
   onToggleVisibility,
   onSelectFocus,
+  timezone,
 }) => {
   const [filter, setFilter] = useState<'All' | 'Ongoing' | 'Broken'>('All');
   const [focusedSignalId, setFocusedSignalId] = useState<number | null>(null);
@@ -209,8 +233,8 @@ export const SignalPanel: React.FC<SignalPanelProps> = ({
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                  <span>Start: {sig.start_time}</span>
-                  <span>End: {sig.status === 'Ongoing' ? 'Active' : sig.end_time}</span>
+                  <span>Start: {formatSignalTime(sig.start_time, timezone)}</span>
+                  <span>End: {sig.status === 'Ongoing' ? 'Active' : formatSignalTime(sig.end_time, timezone)}</span>
                 </div>
               </div>
             );
